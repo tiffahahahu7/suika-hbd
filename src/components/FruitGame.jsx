@@ -152,6 +152,18 @@ function handleDragEnd(event) {
     return updatedFruits;
   });
 }
+
+useEffect(() => {
+  const unlockAudio = () => {
+    const audio = new Audio();
+    audio.play().catch(() => {});
+    window.removeEventListener('touchstart', unlockAudio);
+    window.removeEventListener('mousedown', unlockAudio);
+  };
+  window.addEventListener('touchstart', unlockAudio, { once: true });
+  window.addEventListener('mousedown', unlockAudio, { once: true });
+}, []);
+
   return (
     <DndContext onDragEnd={handleDragEnd}>
       <div className="game-area" ref={gameAreaRef}>
@@ -167,7 +179,7 @@ function handleDragEnd(event) {
         ))}
       </div>
       {showGif && (
-        <div className="celebration">
+        <div className="celebration" key="celebration">
           <img className='celebration-gif' src={hbd} alt="Happy Birthday" />
           <img className='celebration-gif' src={mickeyHbd} alt="Happy Birthday" />
         </div>
