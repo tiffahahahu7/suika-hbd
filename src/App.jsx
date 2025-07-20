@@ -1,6 +1,6 @@
 import './App.css'
 import FruitGame from './components/FruitGame';
-import './styles/FruitGame.css';
+import Fireworks from './components/Fireworks';
 
 function App() {
 
@@ -8,6 +8,7 @@ function App() {
     <>
       <h1>🍉 合成大西瓜 🍉</h1>
       <FruitGame />
+      <Fireworks />
       <footer className="footer">
         <div className="footer-content">
           <p>

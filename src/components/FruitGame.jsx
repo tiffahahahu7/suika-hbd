@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { DndContext, useDraggable } from '@dnd-kit/core';
 import Fruit from './Fruit';
 import hbd from '../assets/happy-birthday.gif';
@@ -14,6 +14,8 @@ import peach from '../assets/fruits/8 - peach.png';
 import pineapple from '../assets/fruits/9 - pineapple.png';
 import melon from '../assets/fruits/10 - melon.png';
 import watermelon from '../assets/fruits/11 - watermelon.png';
+import popSound from '../assets/music/pop.mp3';
+import hbdSound from '../assets/music/hbd.mp3';
 
 const fruitImages = [
   cherry,
@@ -36,7 +38,34 @@ function getNextType(typeIdx) {
   return typeIdx < fruitImages.length - 1 ? typeIdx + 1 : typeIdx;
 }
 
+function playSound(src) {
+  const audio = new Audio(src);
+  audio.play();
+}
+
+function getRandomPosition(size, areaWidth, areaHeight) {
+  const x = Math.floor(Math.random() * Math.max(1, areaWidth - size));
+  const y = Math.floor(Math.random() * Math.max(1, areaHeight - size));
+  return { x, y };
+}
 export default function FruitGame() {
+  const gameAreaRef = useRef(null);
+  const [areaSize, setAreaSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    function updateSize() {
+      if (gameAreaRef.current) {
+        setAreaSize({
+          width: gameAreaRef.current.offsetWidth,
+          height: gameAreaRef.current.offsetHeight,
+        });
+      }
+    }
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
+
   const [fruits, setFruits] = useState([
     { id: 1, type: 0, x: 100, y: 100 },
     { id: 2, type: 0, x: 200, y: 100 },
@@ -53,6 +82,25 @@ export default function FruitGame() {
   ]);
   const [showGif, setShowGif] = useState(false); 
 
+useEffect(() => {
+  if (areaSize.width && areaSize.height) {
+    setFruits([
+      { id: 1, type: 0, ...getRandomPosition(fruitSizes[0], areaSize.width, areaSize.height) },
+      { id: 2, type: 0, ...getRandomPosition(fruitSizes[0], areaSize.width, areaSize.height) },
+      { id: 3, type: 1, ...getRandomPosition(fruitSizes[1], areaSize.width, areaSize.height) },
+      { id: 4, type: 2, ...getRandomPosition(fruitSizes[2], areaSize.width, areaSize.height) },
+      { id: 5, type: 3, ...getRandomPosition(fruitSizes[3], areaSize.width, areaSize.height) },
+      { id: 6, type: 4, ...getRandomPosition(fruitSizes[4], areaSize.width, areaSize.height) },
+      { id: 7, type: 5, ...getRandomPosition(fruitSizes[5], areaSize.width, areaSize.height) },
+      { id: 8, type: 6, ...getRandomPosition(fruitSizes[6], areaSize.width, areaSize.height) },
+      { id: 9, type: 7, ...getRandomPosition(fruitSizes[7], areaSize.width, areaSize.height) },
+      { id: 10, type: 8, ...getRandomPosition(fruitSizes[8], areaSize.width, areaSize.height) },
+      { id: 11, type: 9, ...getRandomPosition(fruitSizes[9], areaSize.width, areaSize.height) },
+      { id: 12, type: 10, ...getRandomPosition(fruitSizes[10], areaSize.width, areaSize.height) },
+    ]);
+  }
+}, [areaSize.width, areaSize.height]);
+
   // Helper to check collision between two fruits
   function isColliding(f1, f2) {
     const size = fruitSizes[f1.type];
@@ -62,30 +110,33 @@ export default function FruitGame() {
     );
   }
 
-  function handleDragEnd(event) {
-    const { active, delta } = event;
-    setFruits(fruits => {
-      const movedFruit = fruits.find(f => f.id === active.id);
-      if (!movedFruit) return fruits;
-      const newX = movedFruit.x + delta.x;
-      const newY = movedFruit.y + delta.y;
-      // Update position
-      let updatedFruits = fruits.map(f =>
-        f.id === active.id ? { ...f, x: newX, y: newY } : f
-      );
-      // Check for collision and merge
-      const collided = updatedFruits.find(
-        f =>
-          f.id !== active.id &&
-          f.type === movedFruit.type &&
-          isColliding({ ...movedFruit, x: newX, y: newY }, f)
-      );
-      if (collided) {
+function handleDragEnd(event) {
+  const { active, delta } = event;
+  setFruits(fruits => {
+    const movedFruit = fruits.find(f => f.id === active.id);
+    if (!movedFruit) return fruits;
+    const size = fruitSizes[movedFruit.type];
+    const newX = Math.max(0, Math.min(movedFruit.x + delta.x, areaSize.width - size));
+    const newY = Math.max(0, Math.min(movedFruit.y + delta.y, areaSize.height - size));
+    // Update position
+    let updatedFruits = fruits.map(f =>
+      f.id === active.id ? { ...f, x: newX, y: newY } : f
+    );
+    // Check for collision with any fruit
+    const collided = updatedFruits.find(
+      f =>
+        f.id !== active.id &&
+        isColliding({ ...movedFruit, x: newX, y: newY }, f)
+    );
+    if (collided) {
+      if (collided.type === movedFruit.type) {
         // If merging two watermelons, show hbd gif
         if (movedFruit.type === fruitImages.length - 1) {
+          playSound(hbdSound);
           setShowGif(true);
           return [];
         }
+        playSound(popSound);
         const nextType = getNextType(movedFruit.type);
         const newFruit = {
           id: Date.now(),
@@ -97,13 +148,13 @@ export default function FruitGame() {
           .filter(f => f.id !== active.id && f.id !== collided.id)
           .concat(newFruit);
       }
-      return updatedFruits;
-    });
-  }
-
+    }
+    return updatedFruits;
+  });
+}
   return (
     <DndContext onDragEnd={handleDragEnd}>
-      <div className="game-area">
+      <div className="game-area" ref={gameAreaRef}>
         {fruits.map(fruit => (
           <Fruit
             key={fruit.id}
