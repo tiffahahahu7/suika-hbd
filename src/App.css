@@ -42,6 +42,7 @@
   z-index: 9999;
   flex-direction: column;
   justify-content: center;
+  gap: 36px;
   align-items: center;
   width: 100vw;
   height: 100vh;
@@ -74,6 +75,37 @@
     opacity: 0;
   }
 }
+
+.replay-btn {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.replay-btn .replay-bubble {
+  height: 64px;
+  display: block;
+  position: relative;
+}
+
+.replay-btn .replay-icon {
+  width: 32px;
+  height: 32px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
 
 .footer {
   width: 100%;

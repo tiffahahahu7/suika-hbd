@@ -48,7 +48,7 @@ function getRandomPosition(size, areaWidth, areaHeight) {
   const y = Math.floor(Math.random() * Math.max(1, areaHeight - size));
   return { x, y };
 }
-export default function FruitGame() {
+export default function FruitGame({ onGameOver }) {
   const gameAreaRef = useRef(null);
   const [areaSize, setAreaSize] = useState({ width: 0, height: 0 });
 
@@ -134,6 +134,7 @@ function handleDragEnd(event) {
         if (movedFruit.type === fruitImages.length - 1) {
           playSound(hbdSound);
           setShowGif(true);
+          if (onGameOver) onGameOver(); 
           return [];
         }
         playSound(popSound);
@@ -152,17 +153,6 @@ function handleDragEnd(event) {
     return updatedFruits;
   });
 }
-
-useEffect(() => {
-  const unlockAudio = () => {
-    const audio = new Audio();
-    audio.play().catch(() => {});
-    window.removeEventListener('touchstart', unlockAudio);
-    window.removeEventListener('mousedown', unlockAudio);
-  };
-  window.addEventListener('touchstart', unlockAudio, { once: true });
-  window.addEventListener('mousedown', unlockAudio, { once: true });
-}, []);
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
